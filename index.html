@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Verdict Arena — two sides, one round, a winner on chain</title>
+<style>
+  :root{ --bg:#0c0a07; --card:#181410; --line:#2c2519; --ink:#f8f1e6; --dim:#c3b399; --faint:#8a7a5f;
+    --accent:#f5b301; --for:#4ade80; --against:#fb7185; --amber:#f5b301; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif}
+  a{color:var(--accent)}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 70px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .brand{font-weight:800;font-size:20px}.brand i{color:var(--accent);font-style:normal}
+  .net{font:12px ui-monospace,monospace;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+  button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:#221c13;color:var(--ink);padding:9px 14px}
+  button.primary{background:var(--accent);color:#2a1e00;border-color:transparent;font-weight:700}
+  button.for{background:#13261a;color:var(--for);border-color:#1f4030}
+  button.against{background:#2a1317;color:var(--against);border-color:#4a2027}
+  button:disabled{opacity:.5;cursor:default}
+  h1{font-size:27px;margin:26px 0 6px;letter-spacing:-.3px}
+  .lead{color:var(--dim);max-width:740px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:16px 0}
+  label{display:block;font:12px ui-monospace,monospace;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:12px 0 5px}
+  input,textarea{width:100%;background:#0f0c08;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:10px 11px;font:inherit}
+  textarea{min-height:80px;resize:vertical}
+  .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .muted{color:var(--faint);font-size:13px}
+  .status{margin-top:10px;color:var(--dim);font-size:14px;min-height:18px}
+  h2{font-size:14px;color:var(--dim);font-family:ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase;margin:28px 0 6px}
+  .card{border-top:1px solid var(--line);padding:18px 0}.card:first-child{border-top:0}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .badge{display:inline-block;font:12px ui-monospace,monospace;font-weight:700;padding:3px 9px;border-radius:999px}
+  .b-open{background:#241c0e;color:var(--amber)} .b-ready{background:#1a2230;color:#7cc4ff} .b-decided{background:#17241a;color:var(--for)}
+  .motion{font-weight:800;font-size:17px;margin:2px 0}
+  .sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}@media(max-width:620px){.sides{grid-template-columns:1fr}}
+  .side{border:1px solid var(--line);border-radius:12px;padding:12px}
+  .side.forC{border-color:#1f4030} .side.againstC{border-color:#4a2027}
+  .side h4{margin:0 0 6px;font:12px ui-monospace,monospace;letter-spacing:1px}
+  .forC h4{color:var(--for)} .againstC h4{color:var(--against)}
+  .arg{font-size:14px;white-space:pre-wrap;color:var(--ink)}
+  .empty{color:var(--faint);font-size:13px}
+  .meta{color:var(--faint);font-size:12px;font-family:ui-monospace,monospace;margin-top:6px;word-break:break-all}
+  .win{margin-top:10px;border-left:3px solid var(--accent);padding-left:10px;color:var(--dim);font-size:14px}
+  .won{outline:2px solid var(--accent)}
+  .box{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.box textarea{flex:1;min-width:220px}
+  .lb{display:flex;flex-direction:column;gap:6px}
+  .lbrow{display:flex;justify-content:space-between;gap:10px;font-family:ui-monospace,monospace;font-size:13px;border-bottom:1px solid var(--line);padding:6px 0}
+  .lbrow b{color:var(--accent)}
+  footer{color:var(--faint);font-size:13px;border-top:1px solid var(--line);padding-top:18px;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Verdict Arena<i>.</i> argue it. let the round decide.</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="net">GenLayer Asimov</span>
+      <button id="connect">Connect wallet</button>
+    </div>
+  </header>
+  <div id="wstatus" class="muted" style="margin-top:10px"></div>
+
+  <h1>Two sides argue a motion on chain. A round of GenLayer validators names the winner.</h1>
+  <p class="lead">Who argued a case better is a judgement no formula can make. Open a motion, let one side argue
+    <b>for</b> and another argue <b>against</b>, each committing their argument in their own transaction. Then anyone
+    can ask a GenLayer round to read both and name the more convincing side. Neither side can force the win, the
+    contract fetches nothing, and "I win" is not a winning argument.</p>
+
+  <h2>Open a debate</h2>
+  <section>
+    <label>The motion (a claim worth arguing)</label>
+    <input id="motion" placeholder="Remote work beats the office for software teams." />
+    <div class="actions"><button class="primary" id="make">Open debate</button>
+      <span class="muted">Then one side argues for it and another against it. The round decides.</span></div>
+    <div class="status" id="pstatus"></div>
+  </section>
+
+  <h2>Leaderboard</h2>
+  <section id="board-lb"><div class="muted">Reading the arena from chain…</div></section>
+
+  <h2>Debates</h2>
+  <div class="muted" id="counts"></div>
+  <section id="board"><div class="muted">Reading the arena from chain…</div></section>
+
+  <footer>
+    Contract: <a id="exp" href="#" target="_blank" rel="noopener">on the Asimov explorer</a> ·
+    <a href="https://github.com/JspIIV/verdict-arena" target="_blank" rel="noopener">source</a> ·
+    reads need no wallet; opening, arguing and judging are transactions on GenLayer Asimov.
+  </footer>
+</div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/genlayer-js@1.1.8";
+import { testnetAsimov } from "https://esm.sh/genlayer-js@1.1.8/chains";
+
+const CONTRACT = "0x85df00A10465050900c3Cc20273AE11Db24DbFC2";
+const CHAIN_ID_HEX = "0x107d";
+const CHAIN_PARAMS = { chainId: CHAIN_ID_HEX, chainName: "GenLayer Asimov",
+  nativeCurrency:{name:"GEN",symbol:"GEN",decimals:18},
+  rpcUrls:["https://rpc-asimov.genlayer.com"], blockExplorerUrls:["https://explorer-asimov.genlayer.com"] };
+const EXPLORER = "https://explorer-asimov.genlayer.com";
+const ROUND_GAS = 8_000_000n, GAS_CAP = 95_000_000n, WALLET_COMPUTES=["nonce","type","chainId"];
+
+const reader = createClient({ chain: testnetAsimov });
+let account = null;
+const $ = id => document.getElementById(id);
+const short = a => a?`${String(a).slice(0,6)}…${String(a).slice(-4)}`:"";
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const transient = e => /revert|-32005|-32006|-32603|at capacity|gas rate|rate limit|backpressure|fetch failed|timeout|502|503|429|resource not found/i
+  .test(String(e?.details||e?.shortMessage||e?.message||e));
+$("exp").href = EXPLORER + "/address/" + CONTRACT;
+
+async function read(fn, args=[]) {
+  for (let i=1;i<=4;i++){ try { const raw = await reader.readContract({address:CONTRACT,functionName:fn,args});
+      try{return JSON.parse(raw)}catch{return raw} } catch(e){ if(!transient(e))throw e; await sleep(1500*i); } }
+}
+function walletFriendly(p){ return { ...p, request: async payload=>{
+  if(payload?.method!=="eth_sendTransaction") return p.request(payload);
+  const tx={...(payload.params?.[0]??{})}; for(const k of WALLET_COMPUTES) delete tx[k];
+  if(BigInt(tx.gas??0)<ROUND_GAS) tx.gas="0x"+ROUND_GAS.toString(16);
+  if(BigInt(tx.gas??0)>GAS_CAP) tx.gas="0x"+GAS_CAP.toString(16);
+  try{ return await p.request({method:"eth_sendTransaction",params:[tx]}); }
+  catch(err){ if(err?.code!==-32602||tx.gasPrice===undefined) throw err; const t={...tx}; delete t.gasPrice;
+    return p.request({method:"eth_sendTransaction",params:[t]}); } } }; }
+
+const injected = [];
+try{ window.addEventListener("eip6963:announceProvider", ev=>{ if(ev?.detail?.provider) injected.push(ev.detail); });
+  window.dispatchEvent(new Event("eip6963:requestProvider")); }catch{}
+function pickProvider(){
+  const mm = injected.find(d=>/metamask/i.test(d.info?.rdns||"")||/metamask/i.test(d.info?.name||""));
+  if(mm) return mm.provider;
+  const e = window.ethereum; if(!e) return null;
+  if(Array.isArray(e.providers)&&e.providers.length){ return e.providers.find(p=>p.isMetaMask) || e.providers[0]; }
+  return e;
+}
+function walletCount(){ if(injected.length) return injected.length; const e=window.ethereum; return Array.isArray(e?.providers)?e.providers.length:(e?1:0); }
+let eip1193=null;
+async function useGenLayer(){ const p=eip1193; const cur=await p.request({method:"eth_chainId"});
+  if(String(cur).toLowerCase()===CHAIN_ID_HEX) return;
+  try{ await p.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN_ID_HEX}]}); }
+  catch(err){ if(err&&(err.code===4902||err.code===-32603)){ await p.request({method:"wallet_addEthereumChain",params:[CHAIN_PARAMS]}); return; } throw err; } }
+function client(){ return createClient({ chain: testnetAsimov, account, provider: walletFriendly(eip1193) }); }
+function wsay(msg){ const el=$("wstatus"); if(el) el.textContent=msg||""; }
+async function ensureWallet(){
+  eip1193 = pickProvider();
+  if(!eip1193) throw new Error("No wallet found in this browser. Reading needs no wallet; to open, argue or judge, install MetaMask and open this page in that browser (a wallet does not inject into Claude's built-in browser).");
+  if(!account){ const a=await eip1193.request({method:"eth_requestAccounts"}); account=a&&a[0]; if(!account) throw new Error("No account was shared. Open MetaMask, unlock it, and connect this site."); $("connect").textContent=short(account); }
+  await useGenLayer();
+}
+$("connect").onclick=async ()=>{
+  const n=walletCount();
+  wsay(n>1 ? "Opening MetaMask ("+n+" wallet extensions detected; if nothing appears, click the MetaMask icon in your toolbar)…"
+           : "Opening your wallet… confirm the connection in MetaMask.");
+  const hint=setTimeout(()=>wsay("Still waiting on the wallet. Click the MetaMask icon in your browser toolbar; a request may be waiting there."), 3500);
+  try{ await ensureWallet(); clearTimeout(hint); wsay("Connected "+short(account)+" on GenLayer Asimov."); await loadBoard(); }
+  catch(e){ clearTimeout(hint); const code=e&&e.code;
+    if(code===-32002) wsay("A connection request is already open. Click the MetaMask icon in your toolbar to approve it.");
+    else if(code===4001) wsay("Connection rejected in the wallet. Click Connect wallet to try again.");
+    else wsay(e?.message||String(e)); }
+};
+
+async function sendWrite(fn, args){
+  const c=client();
+  for(let attempt=1;;attempt++){ try{ return await c.writeContract({address:CONTRACT,functionName:fn,args,value:0n}); }
+    catch(e){ if(!transient(e)||attempt>=6) throw e; await sleep(4000*attempt); } }
+}
+async function confirmChange(check, statusEl, okMsg){
+  for(let i=0;i<60;i++){ await sleep(4000);
+    let ok=false; try{ ok=await check(); }catch{}
+    if(ok){ statusEl.textContent=okMsg; await loadBoard(); return true; }
+    statusEl.textContent=`Confirming on chain… ${(i+1)*4}s (Asimov can be slow; leave this open)`;
+  }
+  statusEl.textContent="The network did not confirm in time and may be congested. It may still land; reload in a minute, otherwise try again.";
+  return false;
+}
+
+/* ---- open a debate ---- */
+$("make").onclick = async () => {
+  try {
+    await ensureWallet();
+    const motion=$("motion").value.trim();
+    if(motion.length<8){ $("pstatus").textContent="State the motion, a claim worth debating."; return; }
+    $("pstatus").textContent="Opening… approve it in your wallet.";
+    let before=0; try{ before=(await read("size")).total; }catch{}
+    try{ await sendWrite("open_debate",[motion]); }catch(e){}
+    $("pstatus").textContent="Submitted. Waiting for the network to confirm; this can take a minute on Asimov…";
+    const ok=await confirmChange(async ()=>((await read("size")).total>before), $("pstatus"), "Debate opened. Argue a side below.");
+    if(ok){ $("motion").value=""; }
+  } catch(e){ $("pstatus").textContent="Open failed: "+(e?.shortMessage||e?.message||e); }
+};
+
+/* ---- argue a side ---- */
+async function argue(did, side){
+  const el=$("s-"+did), input=$(side+"-"+did);
+  const text=(input?.value||"").trim();
+  if(text.length<12){ if(el) el.textContent="Write your argument (a sentence or two)."; return; }
+  const fn = side==="for" ? "argue_for" : "argue_against";
+  try{
+    await ensureWallet();
+    if(el) el.textContent="Submitting your argument… approve it in your wallet.";
+    const before=JSON.stringify(await read("get",[String(did)]));
+    try{ await sendWrite(fn,[String(did),text]); }catch(e){ if(el) el.textContent="Submitted; the network may be slow, waiting…"; }
+    for(let i=0;i<90;i++){ await sleep(4000);
+      const now=await read("get",[String(did)]);
+      if(el) el.textContent=`Confirming on chain… ${(i+1)*4}s`;
+      if(JSON.stringify(now)!==before){ await loadBoard(); return; } }
+    if(el) el.textContent="Still settling; reload in a minute.";
+  }catch(e){ if(el) el.textContent="Argue failed: "+(e?.shortMessage||e?.message||e); }
+}
+
+/* ---- judge ---- */
+async function judge(did){
+  const el=$("s-"+did);
+  try{
+    await ensureWallet();
+    if(el) el.textContent="Calling the round…";
+    const before=JSON.stringify(await read("get",[String(did)]));
+    try{ await sendWrite("judge",[String(did)]); }catch(e){ if(el) el.textContent="Submitted; the round may take a few minutes on Asimov…"; }
+    for(let i=0;i<120;i++){ await sleep(5000);
+      const now=await read("get",[String(did)]);
+      if(el) el.textContent=`Round running… ${(i+1)*5}s`;
+      if(JSON.stringify(now)!==before){ await loadBoard(); return; } }
+    if(el) el.textContent="Still settling; reload in a minute.";
+  }catch(e){ if(el) el.textContent="Judge failed: "+(e?.shortMessage||e?.message||e); }
+}
+
+/* ---- render ---- */
+function badge(s){ const m={OPEN:["b-open","OPEN"],READY:["b-ready","READY TO JUDGE"],DECIDED:["b-decided","DECIDED"]}[s]||["b-open",s];
+  return `<span class="badge ${m[0]}">${esc(m[1])}</span>`; }
+function sideBox(w, side){
+  const addr = w[side+"_addr"], arg = w[side+"_arg"];
+  const won = w.status==="DECIDED" && w.winner===side;
+  const label = side==="for" ? "ARGUING FOR" : "ARGUING AGAINST";
+  const cls = side==="for" ? "forC" : "againstC";
+  if(!addr) return `<div class="side ${cls}"><h4>${label}</h4><div class="empty">No one has taken this side yet.</div>
+    ${w.status==="OPEN"||w.status==="READY"?`<div class="box"><textarea id="${side}-${esc(w.id)}" placeholder="Make the case ${side==="for"?"for":"against"} the motion"></textarea>
+      <button data-did="${esc(w.id)}" data-side="${side}" class="argbtn ${side}">Argue ${side==="for"?"FOR":"AGAINST"}</button></div>`:""}</div>`;
+  return `<div class="side ${cls} ${won?"won":""}"><h4>${label}${won?" · WON ✦":""}</h4>
+    <div class="arg">${esc(arg)}</div><div class="meta">${esc(short(addr))}</div></div>`;
+}
+async function loadBoard(){
+  const size = await read("size",[]).catch(()=>null);
+  if(size) $("counts").textContent = `${size.total} debates · ${size.decided} decided · ${size.ready} ready · ${size.open} open`;
+  const data = await read("page",["0","40"]).catch(()=>null);
+  const items = (data && data.items) || [];
+  if(!items.length){ $("board").innerHTML='<div class="muted">No debates yet. Open one above.</div>'; $("board-lb").innerHTML='<div class="muted">No debaters yet.</div>'; return; }
+  // leaderboard from participants
+  const addrs = new Set();
+  for(const w of items){ if(w.for_addr) addrs.add(w.for_addr); if(w.against_addr) addrs.add(w.against_addr); }
+  const recs = [];
+  for(const a of addrs){ try{ const r=await read("record",[a]); recs.push({a,...r}); }catch{} }
+  recs.sort((x,y)=> (y.wins-x.wins) || (x.losses-y.losses) || (y.argued-x.argued));
+  $("board-lb").innerHTML = '<div class="lb">'+recs.slice(0,8).map((r,i)=>`<div class="lbrow"><span>${i+1}. ${esc(short(r.a))}</span><span><b>${esc(r.wins)}W</b> · ${esc(r.losses)}L · ${esc(r.ties)}T <span class="muted">(${esc(r.argued)} argued)</span></span></div>`).join('')+'</div>';
+  // debates
+  $("board").innerHTML = items.map(w=>{
+    return `<div class="card">
+      <div class="row">${badge(w.status)}<span class="motion">${esc(w.motion)}</span></div>
+      <div class="meta">opened by ${esc(short(w.opener))} · #${esc(w.id)}</div>
+      <div class="sides">${sideBox(w,"for")}${sideBox(w,"against")}</div>
+      ${w.status==="DECIDED"&&w.reason?`<div class="win"><b>VERDICT: ${w.winner==="tie"?"TIE":(w.winner==="for"?"FOR wins":"AGAINST wins")}</b> — ${esc(w.reason)}${w.quote?`<br><span class="muted">“${esc(w.quote)}”</span>`:""}</div>`:""}
+      ${w.status==="READY"?`<div class="actions"><button data-judge="${esc(w.id)}" class="judgebtn primary">Judge this debate</button></div>`:""}
+      <div class="status" id="s-${esc(w.id)}"></div>
+    </div>`; }).join("");
+  document.querySelectorAll(".argbtn").forEach(b=>b.onclick=()=>argue(b.getAttribute("data-did"), b.getAttribute("data-side")));
+  document.querySelectorAll(".judgebtn").forEach(b=>b.onclick=()=>judge(b.getAttribute("data-judge")));
+}
+loadBoard();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+Verdict Arena: two sides argue a motion on chain, and a GenLayer round names the winner.
+
+Who argued better is a judgement no formula can make. Someone opens a motion; one side commits an argument for it, another an argument against it, each in its own transaction; a round reads both and names the more convincing side.
+
+open_debate(motion) opens the claim. argue_for(id, argument) and argue_against(id, argument) commit each side's argument on chain; the side is the message sender, and AGAINST must differ from FOR. judge(id) is open to anybody once both argued: a GenLayer round returns FOR_WINS / AGAINST_WINS / TIE.
+
+Neither side can force a win: consensus issues the verdict from the two committed arguments, and "I win" is not a winning argument. The contract fetches nothing, so no page can be forged. An argument that only instructs the judge is not evidence; proven on a real round in both directions, so no injection can win from either side. A live app shows the arena and leaderboard.
